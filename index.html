@@ -51,7 +51,7 @@
               placeholder="Choose date"
             />
           </div>
-          <input type="submit" value="Add Task" id="inp__but"/>
+          <input type="submit" value="Add Task" id="inp__but" />
         </form>
       </section>
       <section id="con__sec03">
@@ -78,6 +78,28 @@
         </div>
         <div id="task__list"></div>
         <p id="empty-message">No tasks yet. Add your first task!</p>
+      </section>
+
+      <section id="con__sec04">
+        <div id="edit-modal" class="modal">
+          <form id="edit-form" class="modal-content">
+            <h2>Edit Task</h2>
+
+            <label for="edit-title">Task Title</label>
+            <input type="text" id="edit-title" required />
+
+            <label for="edit-description">Description</label>
+            <textarea id="edit-description" height="50px" resize="vertical"></textarea>
+
+            <label for="edit-date">Date</label>
+            <input type="date" id="edit-date" />
+
+            <div class="modal-buttons">
+              <button type="button" id="cancel-edit">Cancel</button>
+              <button type="submit" id="save-edit">Save</button>
+            </div>
+          </form>
+        </div>
       </section>
     </main>
 
