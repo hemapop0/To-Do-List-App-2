@@ -17,20 +17,29 @@ const cancelEdit = document.getElementById("cancel-edit");
 const saveEdit = document.getElementById("save-edit");
 
 
+const searchInput = document.getElementById("search__input");
+
+
+
+const filterButtons  = document.querySelectorAll(".filter-btn");
+
+let currentFilter = "all";
+
+
 
 /* ده متغير هنخزّن فيه رقم المهمة اللي بنعدّلها.
 - -1 معناها إننا لسه مختارناش مهمة للتعديل.
 - لو ضغطنا Edit على المهمة رقم 2، هنخزّن الرقم 2 فيه. */
-let editingIndex = -1;
+let editingTask = null;
 
 
 
 
 // عرض المهام
-function renderTasks() {
+function renderTasks(tasksToRender = tasks) {
   tasksContainer.innerHTML = "";
 
-  tasks.forEach((task, index) => {
+  tasksToRender.forEach((task, index) => {
     const taskElement = document.createElement("div");
     if (task.completed) {
     taskElement.style.backgroundColor = "#10b9819a";
@@ -63,22 +72,24 @@ function renderTasks() {
 
     but_complete.addEventListener("click", () => {
       task.completed = !task.completed;
-      renderTasks();
+      renderTasks(tasksToRender);
     });
 
     but_delete.addEventListener("click", () => {
-      tasks.splice(index, 1);
-      renderTasks();
-    });
+  const originalIndex = tasks.indexOf(task);
+
+  if (originalIndex !== -1) {
+    tasks.splice(originalIndex, 1);
+  }
+
+  renderTasks(tasks);
+});
 
     but_edit.addEventListener("click", () => {
       // إظهار الموديل
       editModal.style.display = "flex";
-      // تعيين titletask.value = task.title;
-     /*  titletask.value = task.title;
-      titleDescription.value = task.description;
-      taskDate.value = task.date; */
-      editingIndex = index;
+
+     editingTask = task;
       // تعيين editTitle.value = task.title;
       editTitle.value = task.title;
       editDescription.value = task.description;
@@ -98,7 +109,7 @@ function renderTasks() {
     tasksContainer.appendChild(taskElement);
   });
 
-  if (tasks.length === 0) {
+  if (tasksToRender.length === 0) {
     emptyMessage.style.display = "block";
   } else {
     emptyMessage.style.display = "none";
@@ -112,7 +123,7 @@ editForm.addEventListener("submit", (e) => {
 
 /* Button Save */
 function Savetasks(){
-  if(editingIndex === -1){
+  if(editingTask === null){
     return;
   }
   const title =editTitle.value.trim();
@@ -126,20 +137,20 @@ function Savetasks(){
 
  
 
-  tasks[editingIndex].title = title;
-  tasks[editingIndex].description = description;
-  tasks[editingIndex].date = date;
+  editingTask.title = title;
+  editingTask.description = description;
+  editingTask.date = date;
 
-  renderTasks();
+  renderTasks(tasks);
 
   editModal.style.display = "none";
-  editingIndex = -1;
+  editingTask = null;
   editForm.reset();
 
 }
       /* Function Cancel */
   function cancelTask(){
-    editingIndex = -1;
+    editingTask = null;
     editModal.style.display = "none";
     editForm.reset();
   }
@@ -161,6 +172,14 @@ addform.addEventListener("submit", (e) => {
   if (title === "") {
     return;
 }
+
+
+/* للبحث عن المهمة   title */
+
+
+
+
+
   const description = titleDescription.value.trim();
   const date = taskDate.value;
   if (description === "") {
@@ -181,6 +200,44 @@ addform.addEventListener("submit", (e) => {
   taskDate.value = "";
 
 });
+
+
+/* هنا */
+searchInput.addEventListener("input", (e) => {
+  const searchTerm = e.target.value.trim();
+  
+const filteredTasks = tasks.filter((task) =>
+  task.title.toLowerCase().includes(searchTerm.toLowerCase())
+);
+applyFilters();
+});
+
+filterButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    currentFilter = button.getAttribute("data-filter");
+    applyFilters();
+  });
+});
+
+function applyFilters(){
+  let filteredTasks = tasks;
+  const searchTerm = searchInput.value.trim();
+
+  if (currentFilter === "completed") {
+    filteredTasks = tasks.filter((task) => task.completed);
+  } else if (currentFilter === "pending") {
+    filteredTasks = tasks.filter((task) => !task.completed);
+  }
+
+  if (searchTerm !== "") {
+  // هنا هنفلتر filteredTasks حسب عنوان المهمة
+  filteredTasks = filteredTasks.filter((task) =>
+    task.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+}
+  renderTasks(filteredTasks);
+}
+
 
 // إظهار رسالة القائمة الفارغة عند فتح الصفحة
 renderTasks();
