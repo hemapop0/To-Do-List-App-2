@@ -1,0 +1,17 @@
+
+{
+  "tasks": [
+    {
+      "title": "Study JavaScript",
+      "description": "Practice DOM",
+      "date": "2026-10-25",
+      "completed": false
+    },
+    {
+      "title": "Learn CSS",
+      "description": "Practice Grid",
+      "date": "2026-10-26",
+      "completed": true
+    }
+  ]
+}

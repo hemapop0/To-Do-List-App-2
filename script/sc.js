@@ -1,114 +1,144 @@
 
-const tasks = [];
+/* ==============================
+   1. Load saved tasks
+============================== */
+
+const savedTasks = localStorage.getItem("tasks");
+const tasks = savedTasks ? JSON.parse(savedTasks) : [];
+
+function saveTasks() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+/* ==============================
+   2. Get HTML Elements
+============================== */
 
 const editModal = document.getElementById("edit-modal");
+
 const addform = document.getElementById("sec02__form");
 const titletask = document.getElementById("Title__task");
 const titleDescription = document.getElementById("Title__des");
+const taskDate = document.getElementById("Title__date");
+
 const tasksContainer = document.getElementById("task__list");
 const emptyMessage = document.getElementById("empty-message");
-const taskDate = document.getElementById("Title__date");
 
 const editForm = document.getElementById("edit-form");
 const editTitle = document.getElementById("edit-title");
 const editDescription = document.getElementById("edit-description");
 const editDate = document.getElementById("edit-date");
 const cancelEdit = document.getElementById("cancel-edit");
-const saveEdit = document.getElementById("save-edit");
-
 
 const searchInput = document.getElementById("search__input");
+const filterButtons = document.querySelectorAll(".filter-btn");
 
-
-
-const filterButtons  = document.querySelectorAll(".filter-btn");
+/* ==============================
+   3. Variables
+============================== */
 
 let currentFilter = "all";
-
-
-
-/* ده متغير هنخزّن فيه رقم المهمة اللي بنعدّلها.
-- -1 معناها إننا لسه مختارناش مهمة للتعديل.
-- لو ضغطنا Edit على المهمة رقم 2، هنخزّن الرقم 2 فيه. */
 let editingTask = null;
 
+/* ==============================
+   4. Render Tasks
+============================== */
 
-
-
-// عرض المهام
 function renderTasks(tasksToRender = tasks) {
   tasksContainer.innerHTML = "";
 
-  tasksToRender.forEach((task, index) => {
+  tasksToRender.forEach((task) => {
     const taskElement = document.createElement("div");
+
+    // Completed task styling
     if (task.completed) {
-    taskElement.style.backgroundColor = "#10b9819a";
-    taskElement.style.borderRadius = "5px";
-    taskElement.style.padding = "10px";
-    taskElement.style.marginBottom = "20px";
-    taskElement.style.boxShadow = "0 0 0 3px rgba(16, 185, 129, 0.15)";
-    
-}
+      taskElement.style.backgroundColor = "#10b9819a";
+      taskElement.style.borderRadius = "5px";
+      taskElement.style.padding = "10px";
+      taskElement.style.marginBottom = "20px";
+      taskElement.style.boxShadow =
+        "0 0 0 3px rgba(16, 185, 129, 0.15)";
+    }
+
+    // Task text
     const taskText = document.createElement("p");
+
+    taskText.textContent = [
+      task.title,
+      task.description,
+      task.date
+    ].filter(Boolean).join(" ");
+
+    // Buttons
     const but_delete = document.createElement("button");
     but_delete.classList.add("delete-btn");
+    but_delete.textContent = "Remove";
+
     const but_complete = document.createElement("button");
     but_complete.classList.add("complete-btn");
+    but_complete.textContent = task.completed
+      ? "Undo"
+      : "Complete";
 
     const but_edit = document.createElement("button");
     but_edit.classList.add("edit-btn");
-  
-
-
-    taskText.textContent =
-      task.title + " " +
-      task.description + " " +
-      task.date;
-
-    but_delete.textContent = "Remove";
-    but_complete.textContent = "Complete";
     but_edit.textContent = "Edit";
 
+    /* ==============================
+       Complete / Undo
+    ============================== */
 
     but_complete.addEventListener("click", () => {
       task.completed = !task.completed;
-      renderTasks(tasksToRender);
+
+      saveTasks();
+      applyFilters();
     });
+
+    /* ==============================
+       Remove Task
+    ============================== */
 
     but_delete.addEventListener("click", () => {
-  const originalIndex = tasks.indexOf(task);
+      const originalIndex = tasks.indexOf(task);
 
-  if (originalIndex !== -1) {
-    tasks.splice(originalIndex, 1);
-  }
+      if (originalIndex !== -1) {
+        tasks.splice(originalIndex, 1);
+      }
 
-  renderTasks(tasks);
-});
+      saveTasks();
+      applyFilters();
+    });
+
+    /* ==============================
+       Open Edit Modal
+    ============================== */
 
     but_edit.addEventListener("click", () => {
-      // إظهار الموديل
-      editModal.style.display = "flex";
+      editingTask = task;
 
-     editingTask = task;
-      // تعيين editTitle.value = task.title;
       editTitle.value = task.title;
-      editDescription.value = task.description;
-      editDate.value = task.date;
+      editDescription.value = task.description || "";
+      editDate.value = task.date || "";
 
-      
-
-
-      
-     
+      editModal.style.display = "flex";
     });
+
+    /* ==============================
+       Add elements to page
+    ============================== */
+
     taskElement.appendChild(taskText);
+
+    // Button order: Complete, Edit, Remove
     taskElement.appendChild(but_complete);
-    taskElement.appendChild(but_delete); 
     taskElement.appendChild(but_edit);
-    
+    taskElement.appendChild(but_delete);
+
     tasksContainer.appendChild(taskElement);
   });
 
+  // Empty message
   if (tasksToRender.length === 0) {
     emptyMessage.style.display = "block";
   } else {
@@ -116,128 +146,131 @@ function renderTasks(tasksToRender = tasks) {
   }
 }
 
+/* ==============================
+   5. Add New Task
+============================== */
+
+addform.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const title = titletask.value.trim();
+  const description = titleDescription.value.trim();
+  const date = taskDate.value;
+
+  // Title is required
+  if (title === "") {
+    alert("Please enter a task title.");
+    return;
+  }
+
+  const newTask = {
+    title: title,
+    description: description,
+    date: date,
+    completed: false
+  };
+
+  tasks.push(newTask);
+
+  saveTasks();
+
+  addform.reset();
+
+  applyFilters();
+});
+
+/* ==============================
+   6. Save Edited Task
+============================== */
+
 editForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        Savetasks();
-    });
+  e.preventDefault();
 
-/* Button Save */
-function Savetasks(){
-  if(editingTask === null){
+  if (editingTask === null) {
     return;
   }
-  const title =editTitle.value.trim();
-  const description =editDescription.value.trim();
-  const date =editDate.value;
 
-  if (title === "" || description === "") {
+  const title = editTitle.value.trim();
+  const description = editDescription.value.trim();
+  const date = editDate.value;
+
+  if (title === "") {
+    alert("Please enter a task title.");
     return;
   }
- 
-
- 
 
   editingTask.title = title;
   editingTask.description = description;
   editingTask.date = date;
 
-  renderTasks(tasks);
+  saveTasks();
 
   editModal.style.display = "none";
   editingTask = null;
+
   editForm.reset();
 
-}
-      /* Function Cancel */
-  function cancelTask(){
-    editingTask = null;
-    editModal.style.display = "none";
-    editForm.reset();
-  }
-      /* Button Cancel */
-      cancelEdit.textContent = "Cancel";
-      cancelEdit.addEventListener("click", () => {
-        cancelTask();
-      });
+  applyFilters();
+});
 
+/* ==============================
+   7. Cancel Editing
+============================== */
 
-
-// إضافة مهمة
-addform.addEventListener("submit", (e) => {
-  e.preventDefault();
-
-  const title = titletask.value.trim();
-  
-  /* التحقق من أن المهمة غير فارغة  */
-  if (title === "") {
-    return;
+function cancelTask() {
+  editingTask = null;
+  editModal.style.display = "none";
+  editForm.reset();
 }
 
-
-/* للبحث عن المهمة   title */
-
-
-
-
-
-  const description = titleDescription.value.trim();
-  const date = taskDate.value;
-  if (description === "") {
-    return;
-  }
-
-  tasks.push({
-    title: title,
-    description: description,
-    date: date,
-    completed: false,
-  });
-
-  renderTasks();
-
-  titletask.value = "";
-  titleDescription.value = "";
-  taskDate.value = "";
-
+cancelEdit.addEventListener("click", () => {
+  cancelTask();
 });
 
+/* ==============================
+   8. Search and Filters
+============================== */
 
-/* هنا */
-searchInput.addEventListener("input", (e) => {
-  const searchTerm = e.target.value.trim();
-  
-const filteredTasks = tasks.filter((task) =>
-  task.title.toLowerCase().includes(searchTerm.toLowerCase())
-);
-applyFilters();
-});
+function applyFilters() {
+  const searchTerm = searchInput.value.trim().toLowerCase();
 
-filterButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    currentFilter = button.getAttribute("data-filter");
-    applyFilters();
-  });
-});
-
-function applyFilters(){
   let filteredTasks = tasks;
-  const searchTerm = searchInput.value.trim();
 
+  // Filter by status
   if (currentFilter === "completed") {
     filteredTasks = tasks.filter((task) => task.completed);
   } else if (currentFilter === "pending") {
     filteredTasks = tasks.filter((task) => !task.completed);
   }
 
+  // Search by title
   if (searchTerm !== "") {
-  // هنا هنفلتر filteredTasks حسب عنوان المهمة
-  filteredTasks = filteredTasks.filter((task) =>
-    task.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-}
+    filteredTasks = filteredTasks.filter((task) =>
+      task.title.toLowerCase().includes(searchTerm)
+    );
+  }
+
   renderTasks(filteredTasks);
 }
 
+/* Search input */
 
-// إظهار رسالة القائمة الفارغة عند فتح الصفحة
-renderTasks();
+searchInput.addEventListener("input", () => {
+  applyFilters();
+});
+
+/* Filter buttons */
+
+filterButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    currentFilter = button.getAttribute("data-filter");
+
+    applyFilters();
+  });
+});
+
+/* ==============================
+   9. Initial Render
+============================== */
+
+applyFilters();
